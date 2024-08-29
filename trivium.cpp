@@ -1,3 +1,6 @@
+// Author: Konstantin Yakovlev A.
+// Date: 08/29/2024
+
 #include "trivium.h"
 
 
@@ -9,7 +12,7 @@ void Trivium::stringToBits(std::string input, std::vector<bool>& X){
 		std::bitset<8> b(e);
 
 		for(int i = 0, j = 7; i < 8; i++, j--){
-			X[index + i] = b[j];
+			X[index + i] = b[j]; // store in vector X
 		}
 		index+=8;
 	}
@@ -17,18 +20,15 @@ void Trivium::stringToBits(std::string input, std::vector<bool>& X){
 
 std::bitset<80> Trivium::generateKeyIV(){
 	std::string temp;
+	// check OS of user
 #ifdef _WIN32
-	// WINDOWS
-	temp = exec("cat /dev/urandom | tr -dc 'A-Za-z0-9' | head -c20");
-	/*
-	temp = exec("
-		powershell -Command \"$RNG = [System.Security.Cryptography.RandomNumberGenerator]::Create(); 
+
+	// WINDOWS - UNTESTED	
+	temp = exec("$RNG = [System.Security.Cryptography.RandomNumberGenerator]::Create(); 
 		$Bytes = New-Object Byte[] 20; 
 		$RNG.GetBytes($Bytes); 
 		$String = [Convert]::ToBase64String($Bytes) -replace '[^A-Za-z0-9]', ''; 
-		$String.Substring(0, 20)\"
-		");
-	*/
+		$String.Substring(0, 20)");
 
 #else
 	// MAC / LINUX
