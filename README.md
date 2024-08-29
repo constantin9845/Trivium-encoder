@@ -68,3 +68,7 @@ int main(){
 	return 0;
 }
 ```
+
+## Info
+
+Windows Key/IV generator not tested yet.
