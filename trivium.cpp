@@ -1,16 +1,97 @@
-#include <iostream>
-#include <vector>
-#include <bitset>
-#include <string>
-#include <cmath>
+#include "trivium.h"
 
-const std::bitset<80> IV(std::string("10100010110001111000011100100010111111101110100110001101101001000111011101111110"));
 
-const std::bitset<80> KEY(std::string("00101000100011111111011001011101110001000010101110010010111110010110000011000111"));
+void Trivium::stringToBits(std::string input, std::vector<bool>& X){
 
-// initialize cipher, add KEY and IV randomizer to register A and B
-void initPhase(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C){
+	// each character to bit representation
+	int index = 0;
+	for(char e : input){
+		std::bitset<8> b(e);
 
+		for(int i = 0, j = 7; i < 8; i++, j--){
+			X[index + i] = b[j];
+		}
+		index+=8;
+	}
+}
+
+std::bitset<80> Trivium::generateKeyIV(){
+	std::string temp;
+#ifdef _WIN32
+	// WINDOWS
+	temp = exec("cat /dev/urandom | tr -dc 'A-Za-z0-9' | head -c20");
+	/*
+	temp = exec("
+		powershell -Command \"$RNG = [System.Security.Cryptography.RandomNumberGenerator]::Create(); 
+		$Bytes = New-Object Byte[] 20; 
+		$RNG.GetBytes($Bytes); 
+		$String = [Convert]::ToBase64String($Bytes) -replace '[^A-Za-z0-9]', ''; 
+		$String.Substring(0, 20)\"
+		");
+	*/
+
+#else
+	// MAC / LINUX
+	temp = exec("cat /dev/urandom | tr -dc 'A-Za-z0-9' | head -c20");
+#endif
+
+	std::bitset<80> tempBits = stringToBits(temp);
+
+	return tempBits;
+}
+
+std::bitset<80> Trivium::stringToBits(std::string input){
+
+	std::bitset<80> tempBits;
+
+	// each character to bit representation
+	int index = 0;
+	for(char e : input){
+		std::bitset<8> b(e);
+
+		for(int i = 0, j = 7; i < 8; i++, j--){
+			tempBits[index + i] = b[j];
+		}
+		index+=8;
+	}
+
+	return tempBits;
+}
+
+std::string Trivium::bitsToString(std::vector<bool>& bits){
+	std::string res = "";
+
+	for(int i = 0; i < bits.size(); i+=8){
+
+		int power = 7;
+		int decimal = 0;
+		for(int j = i; j < i+8; j++){
+			if(bits[j]){
+				decimal += pow(2,power);
+			}
+			power--;
+		}
+		res+=char(decimal);
+	}
+	return res;
+}
+
+std::string Trivium::exec(const char* command){
+	std::vector<char> buffer(128);
+	std::string result;
+
+	FILE* pipe = popen(command, "r");
+
+	while(fgets(buffer.data(), buffer.size(), pipe) != nullptr){
+		result += buffer.data();
+	}
+
+	pclose(pipe);
+
+	return result;
+}
+
+void Trivium::initPhase(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C, const std::bitset<80>& KEY, const std::bitset<80>& IV){
 	// load IV into A
 	for(int i = IV.size()-1, index = 0; i >= 0; i--, index++){
 		A[index] = IV[i];
@@ -27,10 +108,13 @@ void initPhase(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C)
 	C[110] = 1;
 }
 
-// perform single shift
-// returns key bit
-bool clock(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C){
+void Trivium::warmUpCipher(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C){
+	for(int i = 0; i < 4*288; i++){
+		clock(A,B,C);
+	}
+}
 
+bool Trivium::clock(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C){
 	// get output of each register
 	bool outputA = A[65] ^ A[92] ^ (A[90]&A[91]);
 	bool outputB = B[68] ^ B[83] ^ (B[81]&B[82]);
@@ -65,59 +149,15 @@ bool clock(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C){
 	return keybit;
 }
 
-// warm up phase
-void warmUpCipher(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C){
-	for(int i = 0; i < 4*288; i++){
-		clock(A,B,C);
-	}
-}
-
-// text data to bit format
-void stringToBits(std::string input, std::vector<bool>& X){
-
-	// each character to bit representation
-	int index = 0;
-	for(char e : input){
-		std::bitset<8> b(e);
-
-		for(int i = 0, j = 7; i < 8; i++, j--){
-			X[index + i] = b[j];
-		}
-		index+=8;
-	}
-
-
-}
-
-std::string bitsToString(std::vector<bool>& Y){
-
-	std::string res = "";
-
-	for(int i = 0; i < Y.size(); i+=8){
-
-		int power = 7;
-		int decimal = 0;
-		for(int j = i; j < i+8; j++){
-			if(Y[j]){
-				decimal += pow(2,power);
-			}
-			power--;
-		}
-		res+=char(decimal);
-	}
-	return res;
-}
-
-void encode(std::vector<bool>& X, std::vector<bool>& Y, std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C){
+void Trivium::encode(std::vector<bool>& X, std::vector<bool>& Y, std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C){
 	for(int i = 0; i < X.size(); i++){
 		bool keyBit = clock(A,B,C);
 		Y[i] = X[i]^keyBit;
 	}
 }
 
-// encrypt function
-std::string encrypt(std::string input){
 
+Trivium::EncryptionResult Trivium::encrypt(const std::string& input){
 	std::vector<bool> A(93);
 	std::vector<bool> B(84);
 	std::vector<bool> C(111);
@@ -125,32 +165,91 @@ std::string encrypt(std::string input){
 	std::vector<bool> X(input.size()*8);
 	std::vector<bool> Y(input.size()*8);
 
-	initPhase(A, B, C);
+	std::bitset<80> KEY = generateKeyIV();
+	std::bitset<80> IV = generateKeyIV();
+
+	initPhase(A, B, C, KEY, IV);
 	warmUpCipher(A, B, C);
 	stringToBits(input, X);
 	encode(X,Y,A,B,C);	
-	std::string encodedText = bitsToString(Y);
 
-	return encodedText;
+	std::string encodedString = bitsToString(Y);
+
+	EncryptionResult result;
+	result.key = KEY;
+	result.iv = IV;
+	result.encodedText = encodedString;
+
+	return result;
 }
 
+Trivium::EncryptionResult Trivium::encrypt(const std::string& input, const std::bitset<80>& KEY){
+	std::vector<bool> A(93);
+	std::vector<bool> B(84);
+	std::vector<bool> C(111);
 
+	std::vector<bool> X(input.size()*8);
+	std::vector<bool> Y(input.size()*8);
 
-int main(){
-	std::string input = "This is a test string.";
+	std::bitset<80> IV = generateKeyIV();
 
-	std::cout<<std::endl;
-	std::cout<<"Initial text: "<<input<<std::endl;
-	
-	std::string encodedText = encrypt(input);
+	initPhase(A, B, C, KEY, IV);
+	warmUpCipher(A, B, C);
+	stringToBits(input, X);
+	encode(X,Y,A,B,C);	
 
-	std::cout<<std::endl;
-	std::cout<<"Encrypted: "<<encodedText<<std::endl;
+	std::string encodedString = bitsToString(Y);
 
-	std::string decodedText = encrypt(encodedText);
+	EncryptionResult result;
+	result.key = KEY;
+	result.iv = IV;
+	result.encodedText = encodedString;
 
-	std::cout<<std::endl;
-	std::cout<<"Decrypted: "<<decodedText<<std::endl;
+	return result;
 }
 
+Trivium::EncryptionResult Trivium::encrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV){
+	std::vector<bool> A(93);
+	std::vector<bool> B(84);
+	std::vector<bool> C(111);
 
+	std::vector<bool> X(input.size()*8);
+	std::vector<bool> Y(input.size()*8);
+
+	initPhase(A, B, C, KEY, IV);
+	warmUpCipher(A, B, C);
+	stringToBits(input, X);
+	encode(X,Y,A,B,C);	
+
+	std::string encodedString = bitsToString(Y);
+
+	EncryptionResult result;
+	result.key = KEY;
+	result.iv = IV;
+	result.encodedText = encodedString;
+
+	return result;
+}
+
+Trivium::EncryptionResult Trivium::decrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV){
+	std::vector<bool> A(93);
+	std::vector<bool> B(84);
+	std::vector<bool> C(111);
+
+	std::vector<bool> X(input.size()*8);
+	std::vector<bool> Y(input.size()*8);
+
+	initPhase(A, B, C, KEY, IV);
+	warmUpCipher(A, B, C);
+	stringToBits(input, X);
+	encode(X,Y,A,B,C);	
+
+	std::string decodedString = bitsToString(Y);
+
+	EncryptionResult result;
+	result.key = KEY;
+	result.iv = IV;
+	result.encodedText = decodedString;
+
+	return result;
+}
