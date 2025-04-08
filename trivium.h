@@ -6,38 +6,38 @@
 #include <bitset>
 #include <string>
 #include <cmath>
+#include <fstream>
 
 class Trivium{
 	public:
 		// struct that holds result of de/encryption
 		// contains: data, key and IV used
-		struct EncryptionResult {
+		struct Output {
 	        std::bitset<80> key;
 	        std::bitset<80> iv;
-	        std::string encodedText;
+	        std::string content;
     	};
 		// generate 80 bit key/IV
 		static std::bitset<80> generateKeyIV();
 
 		// encrypt with no key and IV
-		static EncryptionResult encrypt(const std::string& input);
+		static Output encrypt(const std::string& input);
 
 		// encript with custom key and no IV
-		static EncryptionResult encrypt(const std::string& input, const std::bitset<80>& KEY);
+		static Output encrypt(const std::string& input, const std::bitset<80>& KEY);
 
 		// encript with custom key and IV
-		static EncryptionResult encrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV);
+		static Output encrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV);
 
 		// Decrypt encoded data
 		// requires same Key and IV that was used during encryption
-		static EncryptionResult decrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV);
+		static Output decrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV);
 
 	private:
-		// execute system specific command for number generation
-		static std::string exec(const char* command);
 		
 		// initialize registers
 		static void initPhase(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C, const std::bitset<80>& KEY, const std::bitset<80>& IV);
+		
 		// Warm up cipher without recording output
 		static void warmUpCipher(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C);
 

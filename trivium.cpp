@@ -11,34 +11,58 @@ void Trivium::stringToBits(std::string input, std::vector<bool>& X){
 	for(char e : input){
 		std::bitset<8> b(e);
 
+		
 		for(int i = 0, j = 7; i < 8; i++, j--){
-			X[index + i] = b[j]; // store in vector X
+			X[index + i] = b[j]; 
 		}
 		index+=8;
 	}
 }
 
 std::bitset<80> Trivium::generateKeyIV(){
-	std::string temp;
+
+	unsigned char buffer[10];
+
 	// check OS of user
 #ifdef _WIN32
+	// NEED TESTING
+	std::random_device rd;
+	std::mt19937 eng(rd());
+	std::uniform_int_distribution<> distr(0, 255);
 
-	// WINDOWS - UNTESTED	
-	temp = exec("$RNG = [System.Security.Cryptography.RandomNumberGenerator]::Create(); 
-		$Bytes = New-Object Byte[] 20; 
-		$RNG.GetBytes($Bytes); 
-		$String = [Convert]::ToBase64String($Bytes) -replace '[^A-Za-z0-9]', ''; 
-		$String.Substring(0, 20)");
+	for(int i = 0; i < sizeof(buffer); i++){
+		buffer[i] = static_cast<unsigned char>(distr(eng));
+	}
 
 #else
 	// MAC / LINUX
-	temp = exec("cat /dev/urandom | tr -dc 'A-Za-z0-9' | head -c20");
+	std::ifstream urandom("/dev/urandom", std::ios::binary);
+
+	if (!urandom) {
+        throw std::runtime_error("Failed to open /dev/urandom");
+    }
+
+	urandom.read(reinterpret_cast<char*>(buffer), sizeof(buffer));
+
+	if (!urandom) {
+        throw std::runtime_error("Error reading from /dev/urandom");
+    }
+
 #endif
 
-	std::bitset<80> tempBits = stringToBits(temp);
+	std::bitset<80> bits;
 
-	return tempBits;
+	// Fill the bitset with the read random bytes
+    for (size_t i = 0; i < sizeof(buffer); ++i) {
+        for (int bit = 0; bit < 8; ++bit) {
+            bits[i * 8 + bit] = (buffer[i] >> (7 - bit)) & 1;
+        }
+    }
+
+    return bits;
 }
+
+
 
 std::bitset<80> Trivium::stringToBits(std::string input){
 
@@ -74,21 +98,6 @@ std::string Trivium::bitsToString(std::vector<bool>& bits){
 		res+=char(decimal);
 	}
 	return res;
-}
-
-std::string Trivium::exec(const char* command){
-	std::vector<char> buffer(128);
-	std::string result;
-
-	FILE* pipe = popen(command, "r");
-
-	while(fgets(buffer.data(), buffer.size(), pipe) != nullptr){
-		result += buffer.data();
-	}
-
-	pclose(pipe);
-
-	return result;
 }
 
 void Trivium::initPhase(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C, const std::bitset<80>& KEY, const std::bitset<80>& IV){
@@ -157,7 +166,7 @@ void Trivium::encode(std::vector<bool>& X, std::vector<bool>& Y, std::vector<boo
 }
 
 
-Trivium::EncryptionResult Trivium::encrypt(const std::string& input){
+Trivium::Output Trivium::encrypt(const std::string& input){
 	std::vector<bool> A(93);
 	std::vector<bool> B(84);
 	std::vector<bool> C(111);
@@ -175,15 +184,15 @@ Trivium::EncryptionResult Trivium::encrypt(const std::string& input){
 
 	std::string encodedString = bitsToString(Y);
 
-	EncryptionResult result;
+	Output result;
 	result.key = KEY;
 	result.iv = IV;
-	result.encodedText = encodedString;
+	result.content = encodedString;
 
 	return result;
 }
 
-Trivium::EncryptionResult Trivium::encrypt(const std::string& input, const std::bitset<80>& KEY){
+Trivium::Output Trivium::encrypt(const std::string& input, const std::bitset<80>& KEY){
 	std::vector<bool> A(93);
 	std::vector<bool> B(84);
 	std::vector<bool> C(111);
@@ -200,15 +209,15 @@ Trivium::EncryptionResult Trivium::encrypt(const std::string& input, const std::
 
 	std::string encodedString = bitsToString(Y);
 
-	EncryptionResult result;
+	Output result;
 	result.key = KEY;
 	result.iv = IV;
-	result.encodedText = encodedString;
+	result.content = encodedString;
 
 	return result;
 }
 
-Trivium::EncryptionResult Trivium::encrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV){
+Trivium::Output Trivium::encrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV){
 	std::vector<bool> A(93);
 	std::vector<bool> B(84);
 	std::vector<bool> C(111);
@@ -223,15 +232,15 @@ Trivium::EncryptionResult Trivium::encrypt(const std::string& input, const std::
 
 	std::string encodedString = bitsToString(Y);
 
-	EncryptionResult result;
+	Output result;
 	result.key = KEY;
 	result.iv = IV;
-	result.encodedText = encodedString;
+	result.content = encodedString;
 
 	return result;
 }
 
-Trivium::EncryptionResult Trivium::decrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV){
+Trivium::Output Trivium::decrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV){
 	std::vector<bool> A(93);
 	std::vector<bool> B(84);
 	std::vector<bool> C(111);
@@ -246,10 +255,10 @@ Trivium::EncryptionResult Trivium::decrypt(const std::string& input, const std::
 
 	std::string decodedString = bitsToString(Y);
 
-	EncryptionResult result;
+	Output result;
 	result.key = KEY;
 	result.iv = IV;
-	result.encodedText = decodedString;
+	result.content = decodedString;
 
 	return result;
 }
