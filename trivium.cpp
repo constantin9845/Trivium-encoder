@@ -11,7 +11,7 @@ void Trivium::stringToBits(std::string input, std::vector<bool>& X){
 	for(char e : input){
 		std::bitset<8> b(e);
 
-		
+
 		for(int i = 0, j = 7; i < 8; i++, j--){
 			X[index + i] = b[j]; 
 		}
@@ -100,30 +100,30 @@ std::string Trivium::bitsToString(std::vector<bool>& bits){
 	return res;
 }
 
-void Trivium::initPhase(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C, const std::bitset<80>& KEY, const std::bitset<80>& IV){
+void Trivium::initPhase(std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C, const std::bitset<80>& KEY, const std::bitset<80>& IV){
 	// load IV into A
-	for(int i = IV.size()-1, index = 0; i >= 0; i--, index++){
-		A[index] = IV[i];
+	for(int i = IV.size()-1; i >= 0; i--){
+		A[i] = IV[i];
 	}
 
 	// load key into B
-	for(int i = KEY.size()-1, index = 0; i >= 0; i--, index++){
-		B[index] = KEY[i];
+	for(int i = KEY.size()-1; i >= 0; i--){
+		B[i] = KEY[i];
 	}
 
 	// set C109,110,111 to 1
-	C[108] = 1;
-	C[109] = 1;
-	C[110] = 1;
+	C.flip(108);
+	C.flip(109);
+	C.flip(110);
 }
 
-void Trivium::warmUpCipher(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C){
+void Trivium::warmUpCipher(std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C){
 	for(int i = 0; i < 4*288; i++){
 		clock(A,B,C);
 	}
 }
 
-bool Trivium::clock(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C){
+bool Trivium::clock(std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C){
 	// get output of each register
 	bool outputA = A[65] ^ A[92] ^ (A[90]&A[91]);
 	bool outputB = B[68] ^ B[83] ^ (B[81]&B[82]);
@@ -140,25 +140,19 @@ bool Trivium::clock(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool
 	// shift bits of registers to right
 	// right most bit lost
 	// left most bit takes input calculated above
-	for(int i = A.size()-1; i >= 0; i--){
-		A[i] = A[i-1];
-	}
+	A <<= 1;
 	A[0] = inputA;
 
-	for(int i = B.size()-1; i >= 0; i--){
-		B[i] = B[i-1];
-	}
+	B <<= 1;
 	B[0] = inputB;
 
-	for(int i = C.size()-1; i >= 0; i--){
-		C[i] = C[i-1];
-	}
+	C <<= 1;
 	C[0] = inputC;
 
 	return keybit;
 }
 
-void Trivium::encode(std::vector<bool>& X, std::vector<bool>& Y, std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C){
+void Trivium::encode(std::vector<bool>& X, std::vector<bool>& Y, std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C){
 	for(int i = 0; i < X.size(); i++){
 		bool keyBit = clock(A,B,C);
 		Y[i] = X[i]^keyBit;
@@ -167,9 +161,10 @@ void Trivium::encode(std::vector<bool>& X, std::vector<bool>& Y, std::vector<boo
 
 
 Trivium::Output Trivium::encrypt(const std::string& input){
-	std::vector<bool> A(93);
-	std::vector<bool> B(84);
-	std::vector<bool> C(111);
+
+	std::bitset<93> A;
+	std::bitset<84> B;
+	std::bitset<111> C;
 
 	std::vector<bool> X(input.size()*8);
 	std::vector<bool> Y(input.size()*8);
@@ -193,9 +188,9 @@ Trivium::Output Trivium::encrypt(const std::string& input){
 }
 
 Trivium::Output Trivium::encrypt(const std::string& input, const std::bitset<80>& KEY){
-	std::vector<bool> A(93);
-	std::vector<bool> B(84);
-	std::vector<bool> C(111);
+	std::bitset<93> A;
+	std::bitset<84> B;
+	std::bitset<111> C;
 
 	std::vector<bool> X(input.size()*8);
 	std::vector<bool> Y(input.size()*8);
@@ -218,9 +213,9 @@ Trivium::Output Trivium::encrypt(const std::string& input, const std::bitset<80>
 }
 
 Trivium::Output Trivium::encrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV){
-	std::vector<bool> A(93);
-	std::vector<bool> B(84);
-	std::vector<bool> C(111);
+	std::bitset<93> A;
+	std::bitset<84> B;
+	std::bitset<111> C;
 
 	std::vector<bool> X(input.size()*8);
 	std::vector<bool> Y(input.size()*8);
@@ -241,9 +236,9 @@ Trivium::Output Trivium::encrypt(const std::string& input, const std::bitset<80>
 }
 
 Trivium::Output Trivium::decrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV){
-	std::vector<bool> A(93);
-	std::vector<bool> B(84);
-	std::vector<bool> C(111);
+	std::bitset<93> A;
+	std::bitset<84> B;
+	std::bitset<111> C;
 
 	std::vector<bool> X(input.size()*8);
 	std::vector<bool> Y(input.size()*8);

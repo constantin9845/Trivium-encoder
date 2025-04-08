@@ -36,16 +36,16 @@ class Trivium{
 	private:
 		
 		// initialize registers
-		static void initPhase(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C, const std::bitset<80>& KEY, const std::bitset<80>& IV);
+		static void initPhase(std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C, const std::bitset<80>& KEY, const std::bitset<80>& IV);
 		
 		// Warm up cipher without recording output
-		static void warmUpCipher(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C);
+		static void warmUpCipher(std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C);
 
 		// record output from cipher
 		// calculate output of each register to use as input next round
 		// shift register by 1
 		// returns output
-		static bool clock(std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C);
+		static bool clock(std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C);
 		
 		// convert binary number in string format to boolean vector format
 		// modifies passed vector
@@ -62,5 +62,5 @@ class Trivium{
 
 		// en/decrypts data by calling clock function on each character in X vector
 		// stores result in Y vector
-		static void encode(std::vector<bool>& X, std::vector<bool>& Y, std::vector<bool>& A, std::vector<bool>& B, std::vector<bool>& C);
+		static void encode(std::vector<bool>& X, std::vector<bool>& Y, std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C);
 };
