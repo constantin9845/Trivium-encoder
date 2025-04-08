@@ -51,11 +51,6 @@ class Trivium{
 		// modifies passed vector
 		static void stringToBits(std::string input, std::vector<bool>& X);
 
-		// convert a bitset to string
-		// creates a new bitset
-		// returns bitset 
-		static std::bitset<80> stringToBits(std::string input);
-
 		// convert boolean vector to string format
 		// returns string
 		static std::string bitsToString(std::vector<bool>& bits);

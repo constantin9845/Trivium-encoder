@@ -63,25 +63,6 @@ std::bitset<80> Trivium::generateKeyIV(){
 }
 
 
-
-std::bitset<80> Trivium::stringToBits(std::string input){
-
-	std::bitset<80> tempBits;
-
-	// each character to bit representation
-	int index = 0;
-	for(char e : input){
-		std::bitset<8> b(e);
-
-		for(int i = 0, j = 7; i < 8; i++, j--){
-			tempBits[index + i] = b[j];
-		}
-		index+=8;
-	}
-
-	return tempBits;
-}
-
 std::string Trivium::bitsToString(std::vector<bool>& bits){
 	std::string res = "";
 
