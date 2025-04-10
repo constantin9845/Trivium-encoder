@@ -4,9 +4,9 @@ A C++ library for encrypting and decrypting text/raw byte data using the **Trivi
 
 ## Overview
 
-The **Trivium Stream Cipher** is a cryptographic algorithm that generates a pseudorandom bit stream used for encrypting plaintext data.
+The **Trivium Stream Cipher** is a cryptographic algorithm that generates a pseudorandom bit stream used for encrypting data.
 
-This C++ implementation of the Trivium cipher provides easy-to-use functions for encryption and decryption of text data, with support for generating random keys and IVs, or using user-specified ones. The cipher operates at a high speed and is suitable for stream encryption in scenarios where lightweight, fast encryption is required.
+This C++ implementation of the Trivium cipher provides easy-to-use functions for encryption and decryption of text/byte data, with support for generating random keys and IVs, or using user-specified ones. The cipher operates at a high speed and is suitable for stream encryption in scenarios where lightweight, fast encryption is required.
 
 The library allows:
 - **Random key and IV generation** for encryption,
