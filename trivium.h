@@ -10,15 +10,28 @@
 
 class Trivium{
 	public:
-		// struct that holds result of de/encryption
+		// struct for text/bitset data output
 		// contains: data, key and IV used
 		struct Output {
 	        std::bitset<80> key;
 	        std::bitset<80> iv;
 	        std::string content;
     	};
+
+		struct BitOutput{
+			unsigned char* key;
+			unsigned char* iv;
+			unsigned char* content;
+		};
+
 		// generate 80 bit key/IV
 		static std::bitset<80> generateKeyIV();
+
+		// generate 80 bit key/IV
+		static unsigned char* generateKeyIV(int);
+
+
+		// TEXT FUNCTIONS
 
 		// encrypt with no key and IV
 		static Output encrypt(const std::string& input);
@@ -33,19 +46,41 @@ class Trivium{
 		// requires same Key and IV that was used during encryption
 		static Output decrypt(const std::string& input, const std::bitset<80>& KEY, const std::bitset<80>& IV);
 
+
+		// RAW BYTE FUNCTIONS
+
+		// encrypt with no key and IV
+		static BitOutput encrypt(unsigned char* input, const int& size);
+
+		static BitOutput encrypt(unsigned char* input, const int& size, unsigned char* key);
+
+		static BitOutput encrypt(unsigned char* input, const int& size, unsigned char* key, unsigned char* iv);
+
+		static BitOutput decrypt(unsigned char* input, const int& size, unsigned char* key, unsigned char* iv);
+
+
 	private:
 		
 		// initialize registers
 		static void initPhase(std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C, const std::bitset<80>& KEY, const std::bitset<80>& IV);
 		
+		// initialize registers / byte version
+		static void initPhase(unsigned char* A, unsigned char* B, unsigned char* C, unsigned char* KEY, unsigned char* IV);
+
 		// Warm up cipher without recording output
 		static void warmUpCipher(std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C);
+
+		// warm up cipher / byte version
+		static void warmUpCipher(unsigned char* A, unsigned char* B, unsigned char* C);
 
 		// record output from cipher
 		// calculate output of each register to use as input next round
 		// shift register by 1
 		// returns output
 		static bool clock(std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C);
+
+		// byte version 
+		static bool clock(unsigned char* A, unsigned char* B, unsigned char* C);
 		
 		// convert binary number in string format to boolean vector format
 		// modifies passed vector
@@ -58,4 +93,7 @@ class Trivium{
 		// en/decrypts data by calling clock function on each character in X vector
 		// stores result in Y vector
 		static void encode(std::vector<bool>& X, std::vector<bool>& Y, std::bitset<93>& A, std::bitset<84>& B, std::bitset<111>& C);
+
+		// byte version
+		static void encode(unsigned char* input, const int& size, unsigned char* A, unsigned char* B, unsigned char* C);
 };
